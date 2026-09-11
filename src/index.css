@@ -1,0 +1,277 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#F5F2ED] flex items-center justify-center min-h-screen overflow-hidden m-0 p-0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  }
+}
+
+.phone-container {
+  @apply relative bg-background overflow-hidden;
+  width: 375px;
+  height: 812px;
+  max-height: 96vh;
+  border: 12px solid #1A1A1A;
+  border-radius: 50px;
+  box-shadow: 0 50px 100px -20px rgba(0,0,0,0.3);
+  transform: scale(0.85);
+  transform-origin: center top;
+  margin: 0 auto;
+}
+
+/* Ensure no bottom cutoff */
+/* SplashScreen Styles */
+@font-face {
+  font-family: 'Cinzel';
+  src: url('/fonts/Cinzel/Cinzel-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.splash-container {
+  position: absolute;
+  inset: 0;
+  background: #FFFFFF;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+  font-family: 'Cinzel', serif;
+  overflow: hidden;
+  border-radius: inherit;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.splash-container.fade-out {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.05);
+}
+
+#canvas-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.code-progress {
+  position: absolute;
+  top: 100px;
+  left: 40px;
+  right: 40px;
+  z-index: 1000;
+  font-family: 'Cinzel', serif;
+  color: #000000;
+  width: auto;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.code-progress.visible {
+  opacity: 1;
+}
+
+.code-progress__line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  opacity: 0.6;
+}
+
+.code-progress__bar-bg {
+  flex-grow: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.code-progress__bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: #000000;
+}
+
+.code-progress__value {
+  min-width: 35px;
+  text-align: right;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+.E33-button {
+  font-family: 'Cinzel', serif;
+  padding: 14px 40px;
+  cursor: pointer;
+  background-color: #000000;
+  color: #FFFFFF;
+  border: none;
+  position: relative;
+  clip-path: polygon(0% 50%, 15px 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 15px 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 0.85rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  z-index: 10001;
+  margin-top: auto;
+  margin-bottom: 20px;
+  font-weight: bold;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.E33-button.disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.E33-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #000000;
+  --borderSize: 1px;
+  clip-path: polygon(
+    0% 50%,
+    15px 0%,
+    calc(100% - 15px) 0%,
+    100% 50%,
+    calc(100% - 15px) 100%,
+    15px 100%,
+    0% 50%,
+    var(--borderSize) 50%,
+    calc(15px + 0.5px) calc(100% - var(--borderSize)),
+    calc(100% - 15px - 0.5px) calc(100% - var(--borderSize)),
+    calc(100% - var(--borderSize)) 50%,
+    calc(100% - 15px - 0.5px) var(--borderSize),
+    calc(15px + 0.5px) var(--borderSize),
+    var(--borderSize) 50%
+  );
+  z-index: -1;
+}
+
+/* Flying Petal Animation */
+.flying-petal {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000000;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.1));
+}
+
+@keyframes flyToLogo {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -60%) rotate(-10deg) scale(1.4);
+  }
+  100% {
+    transform: translate(calc(-50% + var(--target-x)), calc(-50% + var(--target-y))) rotate(-15deg) scale(0.6);
+    opacity: 0.2;
+  }
+}
+
+.animate-fly {
+  animation: flyToLogo 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+#loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: #FFFFFF;
+  z-index: 100001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+  font-weight: bold;
+  letter-spacing: 4px;
+  pointer-events: none;
+}
+
+.vinyl-record {
+  @apply relative w-64 h-64 rounded-full overflow-hidden shadow-2xl;
+  background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+  border: 6px solid #111;
+}
+
+.vinyl-grooves {
+  @apply absolute inset-0 rounded-full;
+  background: repeating-radial-gradient(
+    circle at center,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.05) 3px,
+    transparent 4px
+  );
+}
+
+.animate-vinyl-spin {
+  animation: vinyl-spin 12s linear infinite;
+}
+
+.animate-vinyl-spin-paused {
+  animation-play-state: paused;
+}
+
+@keyframes vinyl-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes music-bar {
+  0%, 100% { height: 4px; }
+  50% { height: 14px; }
+}
+
+/* Audio-Text Sync Highlight */
+.text-highlight {
+  @apply transition-all duration-300 relative opacity-30 text-text-main;
+}
+
+.text-highlight.active {
+  @apply font-black scale-[1.03] opacity-100;
+}
+
+.text-highlight.active::before {
+  content: '';
+  @apply absolute -left-4 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-primary rounded-full;
+}
+
+/* Navigation Glass */
+.glass-nav {
+  @apply bg-white/95 backdrop-blur-3xl border-t border-[#F0EDE8];
+}
+
+/* Utilities */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+.home-card-swipe {
+  @apply flex overflow-x-auto snap-x snap-mandatory no-scrollbar w-full gap-4 px-6;
+}
+
+.content-scroll-area {
+  @apply flex-1 overflow-y-auto no-scrollbar relative;
+  height: calc(812px - 44px - 72px); /* Full height minus status bar and bottom nav */
+}
