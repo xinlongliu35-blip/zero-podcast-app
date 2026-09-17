@@ -161,17 +161,98 @@ def _get_browser_cookies(url: str, output_dir: str, prefix: str) -> str:
     return None
 
 
+def get_ffmpeg_path() -> str:
+    """
+    多路径兜底查找 ffmpeg 可执行文件。
+    优先级：环境变量 > imageio-ffmpeg 内置（失败则自动重下）> 全盘搜索 > 系统 PATH > 常见路径
+    """
+    import shutil
+    # 1. 环境变量（最高优先级）
+    env_exe = os.environ.get("IMAGEIO_FFMPEG_EXE")
+    if env_exe and os.path.isfile(env_exe):
+        log(f"从环境变量找到 FFmpeg: {env_exe}")
+        return env_exe
+
+    # 2. imageio-ffmpeg 内置（失败则自动重新下载）
+    try:
+        import imageio_ffmpeg
+        try:
+            exe = imageio_ffmpeg.get_ffmpeg_exe()
+            if exe and os.path.isfile(exe):
+                log(f"从 imageio-ffmpeg 找到 FFmpeg: {exe}")
+                return exe
+        except Exception:
+            pass
+        # 二进制丢失，尝试自动重新下载
+        log("imageio-ffmpeg 二进制丢失，尝试自动重新下载...")
+        imageio_ffmpeg.download()
+        exe = imageio_ffmpeg.get_ffmpeg_exe()
+        if exe and os.path.isfile(exe):
+            log(f"自动下载 FFmpeg 成功: {exe}")
+            return exe
+    except Exception as e:
+        log(f"imageio-ffmpeg 不可用: {e}")
+
+    # 3. 全盘搜索已有的 ffmpeg.exe（可能在用户电脑其他位置）
+    if sys.platform == "win32":
+        log("全盘搜索 ffmpeg.exe（可能需要几秒）...")
+        search_dirs = [
+            os.environ.get("LOCALAPPDATA", ""),
+            os.environ.get("APPDATA", ""),
+            os.path.expanduser("~"),
+            "C:\\",
+        ]
+        for search_dir in search_dirs:
+            if not search_dir or not os.path.isdir(search_dir):
+                continue
+            try:
+                for root, dirs, files in os.walk(search_dir):
+                    # 跳过系统目录和 node_modules 加快搜索
+                    dirs[:] = [d for d in dirs if d not in ("Windows", "Program Files", "Program Files (x86)", "$Recycle.Bin", "node_modules", ".git")]
+                    if "ffmpeg.exe" in files:
+                        found = os.path.join(root, "ffmpeg.exe")
+                        log(f"全盘搜索找到 FFmpeg: {found}")
+                        return found
+            except PermissionError:
+                continue
+            except Exception:
+                continue
+
+    # 4. 系统 PATH 中的 ffmpeg
+    sys_exe = shutil.which("ffmpeg") or shutil.which("ffmpeg.exe")
+    if sys_exe:
+        log(f"从系统 PATH 找到 FFmpeg: {sys_exe}")
+        return sys_exe
+
+    # 5. Windows 常见安装路径兜底
+    if sys.platform == "win32":
+        candidates = [
+            r"C:\ffmpeg\bin\ffmpeg.exe",
+            r"C:\Program Files\ffmpeg\bin\ffmpeg.exe",
+            os.path.expanduser(r"~\scoop\shims\ffmpeg.exe"),
+        ]
+        for c in candidates:
+            if os.path.isfile(c):
+                log(f"从常见路径找到 FFmpeg: {c}")
+                return c
+
+    raise RuntimeError(
+        "找不到 ffmpeg，且自动下载失败。请手动执行：\n"
+        "  pip install --force-reinstall imageio-ffmpeg\n"
+        "  或下载 ffmpeg 并加入系统 PATH"
+    )
+
+
 def download_audio(url: str, output_dir: str, prefix: str) -> tuple:
     """
     用 yt-dlp 下载视频音频，返回 (音频文件路径, 视频标题)
     遇到抖音 403/Fresh cookies 时自动重试（重新获取 ttwid）
     """
     import yt_dlp
-    import imageio_ffmpeg
     import time
 
     audio_path = os.path.join(output_dir, f"{prefix}.mp3")
-    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_path = get_ffmpeg_path()
     log(f"使用 FFmpeg: {ffmpeg_path}")
 
     base_opts = {
